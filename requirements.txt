@@ -1,0 +1,9 @@
+livekit
+livekit-agents
+flask
+flask-cors
+werkzeug
+asyncio
+aiohttp
+python-dotenv
+livekit-plugins-google

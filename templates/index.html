@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./../static/css/style.css">
+  </head>
+  <body>
+    <!-- Floating Call Button -->
+    <div class="floating-call-btn" id="callBtn">
+      <i class="fas fa-phone"></i>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container" id="formContainer">
+      <div class="form-header">
+        <h4>LisstIn</h4>
+        <span class="close-btn" id="closeBtn">
+          <i class="fas fa-times"></i>
+        </span>
+      </div>
+      <div class="form-body">
+        <form id="callForm" method="POST">
+          <div class="form-floating">
+            <label for="name">Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="name"
+              name="name"
+              placeholder="Enter your name"
+              required
+            />
+          </div>
+
+          <div class="form-floating">
+            <label for="phone">Phone Number</label>
+            <div class="phone-input-group">
+              <select
+                class="country-code-select"
+                id="countryCode"
+                name="countryCode"
+                required
+              >
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+91" selected>🇮🇳 +91</option>
+                <option value="+86">🇨🇳 +86</option>
+                <option value="+81">🇯🇵 +81</option>
+                <option value="+49">🇩🇪 +49</option>
+                <option value="+33">🇫🇷 +33</option>
+                <option value="+39">🇮🇹 +39</option>
+                <option value="+34">🇪🇸 +34</option>
+                <option value="+7">🇷🇺 +7</option>
+                <option value="+55">🇧🇷 +55</option>
+                <option value="+52">🇲🇽 +52</option>
+                <option value="+61">🇦🇺 +61</option>
+                <option value="+82">🇰🇷 +82</option>
+                <option value="+65">🇸🇬 +65</option>
+                <option value="+60">🇲🇾 +60</option>
+                <option value="+66">🇹🇭 +66</option>
+                <option value="+84">🇻🇳 +84</option>
+                <option value="+62">🇮🇩 +62</option>
+                <option value="+63">🇵🇭 +63</option>
+                <option value="+971">🇦🇪 +971</option>
+                <option value="+966">🇸🇦 +966</option>
+                <option value="+27">🇿🇦 +27</option>
+                <option value="+234">🇳🇬 +234</option>
+                <option value="+20">🇪🇬 +20</option>
+              </select>
+              <input
+                type="tel"
+                class="form-control phone-number-input"
+                id="phone"
+                name="phone"
+                placeholder="XXXX XXXX XX"
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-phone"></i>
+            <span>Get a Call</span>
+          </button>
+        </form>
+
+        <div id="responseMessage" class="alert"></div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const callBtn = document.getElementById("callBtn");
+        const formContainer = document.getElementById("formContainer");
+        const closeBtn = document.getElementById("closeBtn");
+        const callForm = document.getElementById("callForm");
+
+        // Toggle form visibility
+        callBtn.addEventListener("click", () => {
+          formContainer.classList.add("active");
+        });
+
+        closeBtn.addEventListener("click", () => {
+          formContainer.classList.remove("active");
+        });
+
+        // Close form when clicking outside
+        document.addEventListener("click", (e) => {
+          if (!formContainer.contains(e.target) && !callBtn.contains(e.target)) {
+            formContainer.classList.remove("active");
+          }
+        });
+
+        // Form submission
+        callForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const submitButton = this.querySelector('button[type="submit"]');
+          const originalContent = submitButton.innerHTML;
+
+          // Disable button and show loading state
+          submitButton.disabled = true;
+          submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+          const formData = new FormData(this);
+
+          // Combine country code and phone number
+          const countryCode = document.getElementById("countryCode").value;
+          const phoneNumber = document.getElementById("phone").value;
+          const fullPhoneNumber = countryCode + phoneNumber;
+          formData.set("phone", fullPhoneNumber);
+
+          // Submit form data
+          fetch("/submit", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              const responseDiv = document.getElementById("responseMessage");
+
+              if (data.success) {
+                responseDiv.className = "alert alert-success show";
+                responseDiv.innerHTML = `<strong>Success!</strong> ${data.message}`;
+                callForm.reset();
+
+                // Auto close form after success
+                setTimeout(() => {
+                  formContainer.classList.remove("active");
+                  responseDiv.classList.remove("show");
+                }, 3000);
+              } else {
+                responseDiv.className = "alert alert-danger show";
+                responseDiv.innerHTML = `<strong>Error!</strong> ${data.message}`;
+              }
+
+              // Re-enable button
+              submitButton.disabled = false;
+              submitButton.innerHTML = originalContent;
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              const responseDiv = document.getElementById("responseMessage");
+              responseDiv.className = "alert alert-danger show";
+              responseDiv.innerHTML = "<strong>Error!</strong> Something went wrong. Please try again later.";
+
+              // Re-enable button
+              submitButton.disabled = false;
+              submitButton.innerHTML = originalContent;
+            });
+        });
+      });
+    </script>
+  </body>
+</html>
